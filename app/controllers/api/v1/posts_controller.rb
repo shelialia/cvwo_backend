@@ -10,12 +10,19 @@ class Api::V1::PostsController < ApplicationController
   
     # GET /posts/1
     def show
-      render json: @post
+      @post = Post.includes(:tags).find(params[:id])
+      render json: {
+        post: @post.as_json(only: [:id, :topic, :content, :user_id, :created_at, :updated_at]),
+        tags: @post.tags.map(&:name)
+      }
     end
   
     # POST /posts
     def create
       @post = Post.new(post_params)
+
+      tag_names = params[:post][:tag_names]
+      @post.tag_names = tag_names
   
       if @post.save
         render json: { status: 'success', message: 'Post created successfully', post: @post }
@@ -57,7 +64,7 @@ class Api::V1::PostsController < ApplicationController
   
     # Only allow a trusted parameter "white list" through.
     def post_params
-      params.require(:post).permit(:topic, :content, :user_id)
+      params.require(:post).permit(:topic, :content, :user_id,  tag_names: [])
     end
   end
   
